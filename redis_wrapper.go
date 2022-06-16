@@ -56,6 +56,19 @@ func (wrapper RedisWrapper) RPopLPush(source, destination string) (value string,
 	}
 }
 
+func (wrapper RedisWrapper) RPop(source string) (value string, err error) {
+	value, err = wrapper.rawClient.RPop(unusedContext, source).Result()
+	// println("RPop", source, value, err)
+	switch err {
+	case nil:
+		return value, nil
+	case redis.Nil:
+		return value, ErrorNotFound
+	default:
+		return value, err
+	}
+}
+
 func (wrapper RedisWrapper) SAdd(key, value string) (total int64, err error) {
 	return wrapper.rawClient.SAdd(unusedContext, key, value).Result()
 }

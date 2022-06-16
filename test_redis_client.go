@@ -283,6 +283,28 @@ func (client *TestRedisClient) RPopLPush(source, destination string) (value stri
 	return sourceList[len(sourceList)-1], nil
 }
 
+func (client *TestRedisClient) RPop(source string) (value string, err error) {
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	sourceList, sourceErr := client.findList(source)
+
+	//One of the two isn't a list
+	if sourceErr != nil {
+		return "", ErrorNotFound
+	}
+	//we have nothing to move
+	if len(sourceList) == 0 {
+		return "", ErrorNotFound
+	}
+
+	//Remove the last element of source (tail)
+	client.storeList(source, sourceList[0:len(sourceList)-1])
+
+	return sourceList[len(sourceList)-1], nil
+}
+
 // SAdd adds the specified members to the set stored at key.
 // Specified members that are already a member of this set are ignored.
 // If key does not exist, a new set is created before adding the specified members.

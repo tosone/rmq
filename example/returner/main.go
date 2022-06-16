@@ -4,7 +4,7 @@ import (
 	"log"
 	"math"
 
-	"github.com/adjust/rmq/v4"
+	"github.com/tosone/rmq/v4"
 )
 
 func main() {

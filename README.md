@@ -29,7 +29,7 @@ Let's take a look at how to use rmq.
 Of course you need to import rmq wherever you want to use it.
 
 ```go
-import "github.com/adjust/rmq/v4"
+import "github.com/tosone/rmq/v4"
 ```
 
 ### Connection
@@ -130,7 +130,7 @@ name, err := taskQueue.AddConsumer("task-consumer", taskConsumer)
 
 To uniquely identify each consumer internally rmq creates a random name with
 the given prefix. For example in this case `name` might be
-`task-consumer-WB1zaq`. This name is only used in statistics. 
+`task-consumer-WB1zaq`. This name is only used in statistics.
 
 In our example above the injected `taskConsumer` (of type `*TaskConsumer`) must
 implement the `rmq.Consumer` interface. For example:
@@ -472,7 +472,6 @@ regularly, like once a minute.
 See [`example/cleaner`][cleaner.go].
 
 [cleaner.go]: example/cleaner/main.go
-
 
 ## Testing Included
 

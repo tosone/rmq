@@ -27,6 +27,7 @@ type Queue interface {
 	PurgeRejected() (int64, error)
 	ReturnUnacked(max int64) (int64, error)
 	ReturnRejected(max int64) (int64, error)
+	GetRejected(max int64) ([]string, error)
 	Destroy() (readyCount, rejectedCount int64, err error)
 
 	// internals
@@ -457,6 +458,21 @@ func (queue *redisQueue) move(from, to string, max int64) (n int64, error error)
 		}
 	}
 	return n, nil
+}
+
+func (queue *redisQueue) GetRejected(max int64) ([]string, error) {
+	msgs := []string{}
+	for i := int64(0); i < max; i++ {
+		switch msg, err := queue.redisClient.RPop(queue.rejectedKey); err {
+		case nil: // moved one
+			msgs = append(msgs, msg)
+		case ErrorNotFound: // nothing left
+			return msgs, nil
+		default: // error
+			return nil, err
+		}
+	}
+	return msgs, nil
 }
 
 // Destroy purges and removes the queue from the list of queues
