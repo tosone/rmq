@@ -1,6 +1,11 @@
 package rmq
 
-import "time"
+import (
+	"context"
+	"time"
+
+	"github.com/go-redis/redis/v8"
+)
 
 type RedisClient interface {
 	// simple keys
@@ -23,4 +28,9 @@ type RedisClient interface {
 
 	// special
 	FlushDb() error
+
+	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd
+	EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd
+	ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd
+	ScriptLoad(ctx context.Context, script string) *redis.StringCmd
 }

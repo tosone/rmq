@@ -1,6 +1,11 @@
 package rmq
 
-import "time"
+import (
+	"context"
+	"time"
+
+	"github.com/go-redis/redis/v8"
+)
 
 type TestQueue struct {
 	name           string
@@ -17,17 +22,19 @@ func (queue *TestQueue) String() string {
 	return queue.name
 }
 
-func (queue *TestQueue) Publish(payload ...string) error {
-	queue.LastDeliveries = append(queue.LastDeliveries, payload...)
+func (queue *TestQueue) Publish(payload string, checkAlreadyExist ...bool) error {
+	queue.LastDeliveries = append(queue.LastDeliveries, payload)
 	return nil
 }
 
 func (queue *TestQueue) PublishBytes(payload ...[]byte) error {
-	stringifiedBytes := make([]string, len(payload))
-	for i, b := range payload {
-		stringifiedBytes[i] = string(b)
+	for _, b := range payload {
+		err := queue.Publish(string(b))
+		if err != nil {
+			return err
+		}
 	}
-	return queue.Publish(stringifiedBytes...)
+	return nil
 }
 
 func (*TestQueue) SetPushQueue(Queue)                                   { panic(errorNotSupported) }
@@ -49,6 +56,18 @@ func (*TestQueue) readyCount() (int64, error)          { panic(errorNotSupported
 func (*TestQueue) unackedCount() (int64, error)        { panic(errorNotSupported) }
 func (*TestQueue) rejectedCount() (int64, error)       { panic(errorNotSupported) }
 func (*TestQueue) getConsumers() ([]string, error)     { panic(errorNotSupported) }
+func (*TestQueue) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+	panic(errorNotSupported)
+}
+func (*TestQueue) EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+	panic(errorNotSupported)
+}
+func (*TestQueue) ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd {
+	panic(errorNotSupported)
+}
+func (*TestQueue) ScriptLoad(ctx context.Context, script string) *redis.StringCmd {
+	panic(errorNotSupported)
+}
 
 // test helper
 

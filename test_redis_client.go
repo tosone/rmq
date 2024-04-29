@@ -1,13 +1,16 @@
 package rmq
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
-//TestRedisClient is a mock for redis
+// TestRedisClient is a mock for redis
 type TestRedisClient struct {
 	store sync.Map
 	ttl   sync.Map
@@ -15,7 +18,7 @@ type TestRedisClient struct {
 
 var lock sync.Mutex
 
-//NewTestRedisClient returns a NewTestRedisClient
+// NewTestRedisClient returns a NewTestRedisClient
 func NewTestRedisClient() *TestRedisClient {
 	return &TestRedisClient{}
 }
@@ -57,7 +60,7 @@ func (client *TestRedisClient) Get(key string) (string, error) {
 	return "nil", nil
 }
 
-//Del removes the specified key. A key is ignored if it does not exist.
+// Del removes the specified key. A key is ignored if it does not exist.
 func (client *TestRedisClient) Del(key string) (affected int64, err error) {
 
 	_, found := client.store.Load(key)
@@ -129,9 +132,9 @@ func (client *TestRedisClient) LPush(key string, value ...string) (total int64, 
 	return int64(len(list)) + 1, nil
 }
 
-//LLen returns the length of the list stored at key.
-//If key does not exist, it is interpreted as an empty list and 0 is returned.
-//An error is returned when the value stored at key is not a list.
+// LLen returns the length of the list stored at key.
+// If key does not exist, it is interpreted as an empty list and 0 is returned.
+// An error is returned when the value stored at key is not a list.
 func (client *TestRedisClient) LLen(key string) (affected int64, err error) {
 	list, err := client.findList(key)
 
@@ -354,7 +357,7 @@ func (client *TestRedisClient) SRem(key, value string) (affected int64, err erro
 		return 0, nil
 	}
 
-	if _, found := set[value]; found != false {
+	if _, found := set[value]; found {
 		delete(set, value)
 		return 1, nil
 	}
@@ -369,12 +372,25 @@ func (client *TestRedisClient) FlushDb() error {
 	return nil
 }
 
-//storeSet stores a set
+func (client *TestRedisClient) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+	panic(errorNotSupported)
+}
+func (client *TestRedisClient) EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+	panic(errorNotSupported)
+}
+func (client *TestRedisClient) ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd {
+	panic(errorNotSupported)
+}
+func (client *TestRedisClient) ScriptLoad(ctx context.Context, script string) *redis.StringCmd {
+	panic(errorNotSupported)
+}
+
+// storeSet stores a set
 func (client *TestRedisClient) storeSet(key string, set map[string]struct{}) {
 	client.store.Store(key, set)
 }
 
-//findSet finds a set
+// findSet finds a set
 func (client *TestRedisClient) findSet(key string) (map[string]struct{}, error) {
 	//Lookup the store for the list
 	storedValue, found := client.store.Load(key)
@@ -393,14 +409,14 @@ func (client *TestRedisClient) findSet(key string) (map[string]struct{}, error) 
 	return make(map[string]struct{}), nil
 }
 
-//storeList is an helper function so others don't have to deal with pointers
+// storeList is an helper function so others don't have to deal with pointers
 func (client *TestRedisClient) storeList(key string, list []string) {
 	client.store.Store(key, &list)
 }
 
-//findList returns the list stored at key.
-//if key doesn't exist, an empty list is returned
-//an error is returned when the value at key isn't a list
+// findList returns the list stored at key.
+// if key doesn't exist, an empty list is returned
+// an error is returned when the value at key isn't a list
 func (client *TestRedisClient) findList(key string) ([]string, error) {
 	//Lookup the store for the list
 	storedValue, found := client.store.Load(key)

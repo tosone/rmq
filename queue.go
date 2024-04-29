@@ -7,6 +7,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -15,7 +18,7 @@ const (
 )
 
 type Queue interface {
-	Publish(payload ...string) error
+	Publish(payload string, checkAlreadyExist ...bool) error
 	PublishBytes(payload ...[]byte) error
 	SetPushQueue(pushQueue Queue)
 	StartConsuming(prefetchLimit int64, pollDuration time.Duration) error
@@ -103,20 +106,44 @@ func (queue *redisQueue) String() string {
 	return fmt.Sprintf("[%s conn:%s]", queue.name, queue.connectionName)
 }
 
+var luaLPush = redis.NewScript(`
+local exists = redis.call("lpos", KEYS[1], ARGV[1])
+if not exists or exists == -1 then return redis.call("lpush", KEYS[1], ARGV[1]) else return 0 end`)
+
 // Publish adds a delivery with the given payload to the queue
 // returns how many deliveries are in the queue afterwards
-func (queue *redisQueue) Publish(payload ...string) error {
-	_, err := queue.redisClient.LPush(queue.readyKey, payload...)
+func (queue *redisQueue) Publish(payload string, checkAlreadyExist ...bool) error {
+	if len(checkAlreadyExist) == 1 && checkAlreadyExist[0] {
+		res, err := luaLPush.Run(context.Background(), queue.redisClient, []string{queue.readyKey}, []string{payload}).Result()
+		if err == redis.Nil {
+			log.Debug().Msg("list already have this field")
+			return nil
+		} else if err != nil {
+			return err
+		}
+		if i, ok := res.(int64); !ok {
+			log.Debug().Int64("result", i).Msg("lpush to list failed")
+			return fmt.Errorf("lpush to list failed")
+		} else if i == 0 {
+			log.Debug().Int64("result", i).Msg("since task already exist skip lpush to list")
+		} else if i == 1 {
+			log.Debug().Str("list", queue.readyKey).Str("task", payload).Msg("pushed to list")
+		}
+		return nil
+	}
+	_, err := queue.redisClient.LPush(queue.readyKey, payload)
 	return err
 }
 
 // PublishBytes just casts the bytes and calls Publish
 func (queue *redisQueue) PublishBytes(payload ...[]byte) error {
-	stringifiedBytes := make([]string, len(payload))
-	for i, b := range payload {
-		stringifiedBytes[i] = string(b)
+	for _, b := range payload {
+		err := queue.Publish(string(b))
+		if err != nil {
+			return err
+		}
 	}
-	return queue.Publish(stringifiedBytes...)
+	return nil
 }
 
 // SetPushQueue sets a push queue. In the consumer function you can call

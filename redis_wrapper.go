@@ -10,7 +10,7 @@ import (
 var unusedContext = context.TODO()
 
 type RedisWrapper struct {
-	rawClient redis.Cmdable
+	rawClient redis.UniversalClient
 }
 
 func (wrapper RedisWrapper) Set(key string, value string, expiration time.Duration) error {
@@ -84,4 +84,20 @@ func (wrapper RedisWrapper) SRem(key, value string) (affected int64, err error) 
 func (wrapper RedisWrapper) FlushDb() error {
 	// NOTE: using Err() here because Result() string is always "OK"
 	return wrapper.rawClient.FlushDB(unusedContext).Err()
+}
+
+func (wrapper RedisWrapper) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+	return wrapper.rawClient.Eval(ctx, script, keys, args...)
+}
+
+func (wrapper RedisWrapper) EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+	return wrapper.rawClient.EvalSha(ctx, sha1, keys, args...)
+}
+
+func (wrapper RedisWrapper) ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd {
+	return wrapper.rawClient.ScriptExists(ctx, hashes...)
+}
+
+func (wrapper RedisWrapper) ScriptLoad(ctx context.Context, script string) *redis.StringCmd {
+	return wrapper.rawClient.ScriptLoad(ctx, script)
 }
