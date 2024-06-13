@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisClient interface {
@@ -30,6 +30,8 @@ type RedisClient interface {
 	FlushDb() error
 
 	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd
+	EvalRO(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd
+	EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd
 	EvalSha(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd
 	ScriptExists(ctx context.Context, hashes ...string) *redis.BoolSliceCmd
 	ScriptLoad(ctx context.Context, script string) *redis.StringCmd

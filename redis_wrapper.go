@@ -101,3 +101,11 @@ func (wrapper RedisWrapper) ScriptExists(ctx context.Context, hashes ...string) 
 func (wrapper RedisWrapper) ScriptLoad(ctx context.Context, script string) *redis.StringCmd {
 	return wrapper.rawClient.ScriptLoad(ctx, script)
 }
+
+func (wrapper RedisWrapper) EvalRO(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+	return wrapper.rawClient.EvalRO(ctx, script, keys, args...)
+}
+
+func (wrapper RedisWrapper) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+	return wrapper.rawClient.EvalShaRO(ctx, sha1, keys, args...)
+}

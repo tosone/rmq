@@ -385,6 +385,14 @@ func (client *TestRedisClient) ScriptLoad(ctx context.Context, script string) *r
 	panic(errorNotSupported)
 }
 
+func (client *TestRedisClient) EvalRO(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+	panic(errorNotSupported)
+}
+
+func (client *TestRedisClient) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+	panic(errorNotSupported)
+}
+
 // storeSet stores a set
 func (client *TestRedisClient) storeSet(key string, set map[string]struct{}) {
 	client.store.Store(key, set)
