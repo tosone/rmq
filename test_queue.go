@@ -27,6 +27,11 @@ func (queue *TestQueue) Publish(payload string, checkAlreadyExist ...bool) error
 	return nil
 }
 
+func (queue *TestQueue) PublishOld(payload ...string) error {
+	queue.LastDeliveries = append(queue.LastDeliveries, payload...)
+	return nil
+}
+
 func (queue *TestQueue) PublishBytes(payload ...[]byte) error {
 	for _, b := range payload {
 		err := queue.Publish(string(b))

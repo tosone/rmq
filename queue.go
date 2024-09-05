@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
@@ -19,6 +19,7 @@ const (
 
 type Queue interface {
 	Publish(payload string, checkAlreadyExist ...bool) error
+	PublishOld(payload ...string) error
 	PublishBytes(payload ...[]byte) error
 	SetPushQueue(pushQueue Queue)
 	StartConsuming(prefetchLimit int64, pollDuration time.Duration) error
@@ -132,6 +133,13 @@ func (queue *redisQueue) Publish(payload string, checkAlreadyExist ...bool) erro
 		return nil
 	}
 	_, err := queue.redisClient.LPush(queue.readyKey, payload)
+	return err
+}
+
+// PublishSingleton adds a delivery with the given payload to the queue
+// returns how many deliveries are in the queue afterwards
+func (queue *redisQueue) PublishOld(payload ...string) error {
+	_, err := queue.redisClient.LPush(queue.readyKey, payload...)
 	return err
 }
 
